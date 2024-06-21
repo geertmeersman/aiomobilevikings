@@ -29,24 +29,13 @@ This example script demonstrates how to utilize the `MobileVikingsClient` class 
 
 1. **Installation:** Ensure the `aiomobilevikings` module is installed. If not, install it using `pip install aiomobilevikings`.
 
-2. **Configuration:** Replace the placeholder details (barcode/email, PIN/password, library ID) within the script with actual values.
+2. **Configuration:** Replace the placeholder details (within the script with actual values.
 
-3. **Functionality Displayed:**
-
-   - `current()`: Fetches the current patron items.
-   - `history()`: Retrieves the patron's borrowing history.
-   - `holds()`: Retrieves the patron's holds.
-   - `saved()`: Retrieves the patron's saved items.
-   - `featured()`: Retrieves the patron's featured items.
-   - `email()`: Retrieves the patron's email settings.
-   - `notifications()`: Retrieves patron notifications (unread or archived).
-
-4. **Execution:** Run the script, and it will sequentially call these functions, displaying the retrieved data for each function.
+3. **Execution:** Run the script, and it will sequentially call these functions, displaying the retrieved data for each function.
 
 ### Important Notes
 
-- Replace placeholder values (barcode, PIN, library ID) with your actual Mobile Vikings account details.
-- The `notifications()` function demonstrates both fetching unread notifications and archiving specific notifications.
+- Replace placeholder values (user, password) with your actual Mobile Vikings account details.
 - Make sure you have appropriate access rights and permissions for the Mobile Vikings API endpoints being accessed.
 
 Feel free to modify the script as needed, adding error handling, logging, or additional functionalities based on your requirements and the Mobile Vikings API's capabilities.
