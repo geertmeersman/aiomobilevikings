@@ -2,7 +2,6 @@
 
 import httpx
 import logging
-import json
 from .const import CLIENT_ID, CLIENT_SECRET, BASE_URL
 from datetime import datetime, timedelta
 
