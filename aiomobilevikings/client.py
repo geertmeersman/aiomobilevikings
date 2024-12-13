@@ -3,7 +3,7 @@
 import httpx
 import logging
 from .const import CLIENT_ID, CLIENT_SECRET, BASE_URL
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -90,16 +90,16 @@ class MobileVikingsClient:
         """Request an access token with the given payload."""
         response = await self.handle_request("/oauth2/token/", payload, "POST", True, True)
 
+        data = response.json()
         if response.status_code == 200:
-            data = response.json()
             self.access_token = data.get("access_token")
             self.expires_in = data.get("expires_in")
             self.access_token_expiry = datetime.now() + timedelta(seconds=self.expires_in)
             self.refresh_token = data.get("refresh_token")
         elif response.status_code == 400 and payload.get("grant_type") == "password":
-            raise AuthenticationError("Invalid grant_type")
+            raise AuthenticationError(f"Invalid grant_type - {data.get('error_description')}")
         elif response.status_code == 401 and payload.get("grant_type") == "refresh_token":
-            raise AuthenticationError("Unauthorized")
+            raise AuthenticationError(f"Unauthorized - {data.get('error_description')}")
         else:
             raise AuthenticationError("Failed to authenticate")
 
@@ -190,7 +190,7 @@ class MobileVikingsClient:
             A dictionary containing subscription information.
 
         """
-        subscriptions = await self.handle_request("/subscriptions")
+        subscriptions = await self.handle_request("/subscriptions?state=enabled")
         for subscription in subscriptions:
             subscription_id = subscription.get("id")
             if subscription.get("type") == "fixed-internet":
@@ -198,10 +198,78 @@ class MobileVikingsClient:
                     f"/subscriptions/{subscription_id}/modem/settings"
                 )
             else:
-                subscription["balance"] = await self.handle_request(
+                balance = await self.handle_request(
                     f"/subscriptions/{subscription_id}/balance"
                 )
+                subscription["balance"] = self.add_percentage_to_balance(balance)
         return subscriptions
+
+    def add_percentage_to_balance(self, balance):
+        """Calculate and add validity and usage percentages to each bundle in a balance.
+
+        This function iterates through a list of bundles within the given `balance` and calculates:
+        1. The validity percentage, which indicates how much of the bundle's validity period has elapsed.
+        2. The used percentage, which shows how much of the total bundle has been consumed.
+
+        The calculated percentages are added as new keys (`period_percentage` and `used_percentage`) to each bundle.
+
+        Args:
+        ----
+            balance (dict): A dictionary containing the balance information with a key `bundles`, 
+                        which is a list of dictionaries. Each bundle dictionary must have the following keys:
+                        - `valid_from` (str): Start of the validity period in ISO 8601 format (e.g., "YYYY-MM-DDTHH:MM:SS+ZZ:ZZ").
+                        - `valid_until` (str): End of the validity period in ISO 8601 format.
+                        - `total` (float): The total amount of the bundle.
+                        - `used` (float): The amount of the bundle that has been used.
+
+        Returns:
+        -------
+            dict: The updated balance dictionary with added percentages for each bundle.
+
+        Raises:
+        ------
+            ValueError: If any required key is missing or if `valid_from` and `valid_until` are not properly formatted.
+
+        """
+        # Parse the current time and make it timezone-aware
+        current_time = datetime.now(timezone.utc)
+
+        # Loop through each bundle to calculate and add percentages
+        for bundle in balance['bundles']:
+            try:
+                valid_from = datetime.strptime(bundle['valid_from'], "%Y-%m-%dT%H:%M:%S%z")
+                valid_until = datetime.strptime(bundle['valid_until'], "%Y-%m-%dT%H:%M:%S%z")
+            except ValueError as e:
+                raise ValueError(f"Invalid date format in bundle: {e}")
+
+            # Calculate validity percentage
+            validity_period = (valid_until - valid_from).total_seconds()
+            elapsed_time = (current_time - valid_from).total_seconds()
+            period_percentage = max(0, min((elapsed_time / validity_period) * 100, 100))  # Clamp between 0 and 100
+
+            # Calculate used percentage
+            total = bundle['total']
+            used = bundle['used']
+            used_percentage = (used / total) * 100 if total > 0 else 0
+
+            # Add percentages to the bundle
+            # Rounding to two decimal places ensures consistent formatting and precision for display purposes
+            bundle['period_percentage'] = round(period_percentage, 2)
+            bundle['used_percentage'] = round(used_percentage, 2)
+
+        return balance
+
+    async def get_invoices(self):
+        """Fetch subscriptions from the Mobile Vikings API.
+
+        Returns
+        -------
+        dict
+            A dictionary containing subscription information.
+
+        """
+        invoices = await self.handle_request("/invoices?status=accepted,bad_dept,created,issued,partially_paid,pending_payment,review,unknown")
+        return invoices.get("results")
 
     async def get_data(self):
         """Fetch customer info, loyalty points balance, and subscriptions from the Mobile Vikings API.
@@ -209,14 +277,39 @@ class MobileVikingsClient:
         Returns
         -------
         dict
-            A dictionary containing customer info, loyalty points balance, and subscriptions.
+            A dictionary containing customer info, loyalty points balance, subscriptions, and unpaid invoices.
+
+        Notes
+        -----
+            Errors in individual API calls will result in an error message being included in the respective section of the returned dictionary.
 
         """
+        try:
+            customer_info = await self.get_customer_info()
+        except Exception as e:
+            customer_info = {"error": str(e)}
+
+        try:
+            loyalty_points_balance = await self.get_loyalty_points_balance()
+        except Exception as e:
+            loyalty_points_balance = {"error": str(e)}
+
+        try:
+            subscriptions = await self.get_subscriptions()
+        except Exception as e:
+            subscriptions = {"error": str(e)}
+
+        try:
+            unpaid_invoices = await self.get_invoices()
+        except Exception as e:
+            unpaid_invoices = {"error": str(e)}
+
         return {
             "timestamp": datetime.now().isoformat(),
-            "customer_info": await self.get_customer_info(),
-            "loyalty_points_balance": await self.get_loyalty_points_balance(),
-            "subscriptions": await self.get_subscriptions(),
+            "customer_info": customer_info,
+            "loyalty_points_balance": loyalty_points_balance,
+            "subscriptions": subscriptions,
+            "unpaid_invoices": unpaid_invoices,
             "tokens": {
                 "refresh_token": self.refresh_token,
                 "access_token": self.access_token,
