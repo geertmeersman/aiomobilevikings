@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.3.0](https://github.com/geertmeersman/aiomobilevikings/tree/v0.3.0) (2024-12-13)
+
+[Full Changelog](https://github.com/geertmeersman/aiomobilevikings/compare/v0.2.0...v0.3.0)
+
+**Merged pull requests:**
+
+- feat: Aggregate bundle data by type [\#32](https://github.com/geertmeersman/aiomobilevikings/pull/32) ([geertmeersman](https://github.com/geertmeersman))
+
 ## [v0.2.0](https://github.com/geertmeersman/aiomobilevikings/tree/v0.2.0) (2024-12-13)
 
 [Full Changelog](https://github.com/geertmeersman/aiomobilevikings/compare/v0.1.0...v0.2.0)
