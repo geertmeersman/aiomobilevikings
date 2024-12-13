@@ -266,23 +266,32 @@ class MobileVikingsClient:
             bundle_type = bundle.get("type")
             if not bundle_type:
                 raise KeyError("Each bundle must have a 'type' field.")
-            # Check if the bundle type already exists in the aggregated_bundles
+
+            # Initialize a new structure for this type if not already present
             if bundle_type not in aggregated_bundles:
-                # Create a new structure for this type
                 aggregated_bundles[bundle_type] = {
                     "type": bundle_type,
                     "valid_from": bundle["valid_from"],
                     "valid_until": bundle["valid_until"],
-                    "total": bundle["total"],
-                    "used": bundle["used"],
-                    "remaining": bundle["remaining"],
+                    "total": 0,
+                    "used": 0,
+                    "remaining": 0,
                     "unlimited": False,  # Default to False
                 }
-            else:
-                # Sum up values for this type
-                aggregated_bundles[bundle_type]["total"] += bundle["total"]
-                aggregated_bundles[bundle_type]["used"] += bundle["used"]
-                aggregated_bundles[bundle_type]["remaining"] += bundle["remaining"]
+
+            # Check if the bundle is not "unlimited" and set the values accordingly
+            if not aggregated_bundles[bundle_type]["unlimited"]:
+                if bundle["total"] == 0:
+                    # Mark as unlimited only if not already set
+                    aggregated_bundles[bundle_type]["unlimited"] = True
+                    aggregated_bundles[bundle_type]["total"] = 0
+                    aggregated_bundles[bundle_type]["used"] = 0
+                    aggregated_bundles[bundle_type]["remaining"] = 0
+                else:
+                    # Sum up values for this type
+                    aggregated_bundles[bundle_type]["total"] += bundle["total"]
+                    aggregated_bundles[bundle_type]["used"] += bundle["used"]
+                    aggregated_bundles[bundle_type]["remaining"] += bundle["remaining"]
 
         # Calculate additional values for each aggregated bundle
         for bundle in aggregated_bundles.values():
@@ -290,13 +299,8 @@ class MobileVikingsClient:
             used = bundle["used"]
             remaining = bundle["remaining"]
 
-            # Handle the case where total == 0 (unlimited bundle)
-            if total == 0:
-                bundle["unlimited"] = True
-                bundle["total"] = 0
-                bundle["used"] = 0
-                bundle["remaining"] = 0
-                # Skip further calculations for this bundle (since it's unlimited)
+            # Skip further calculations if the bundle is unlimited (no need for percentages or GB calculations)
+            if bundle["unlimited"]:
                 continue
 
             # Calculate used percentage
@@ -307,7 +311,9 @@ class MobileVikingsClient:
 
             # Only add total_gb, used_gb, and remaining_gb if the bundle type is 'data'
             if bundle["type"] == "data":
-                bundle["total_gb"] = round(total / (1024**3), 2)
+                bundle["total_gb"] = round(
+                    total / (1024**3), 2
+                )  # Convert from bytes to GB
                 bundle["used_gb"] = round(used / (1024**3), 2)
                 bundle["remaining_gb"] = round(remaining / (1024**3), 2)
 
@@ -321,15 +327,14 @@ class MobileVikingsClient:
             except ValueError as e:
                 raise ValueError(f"Invalid date format in bundle: {e}")
 
-            # Calculate validity percentage
+            # Calculate validity percentage (period_percentage)
             validity_period = (valid_until - valid_from).total_seconds()
             elapsed_time = (current_time - valid_from).total_seconds()
             period_percentage = max(
                 0, min((elapsed_time / validity_period) * 100, 100)
             )  # Clamp between 0 and 100
 
-            # Add percentages to the bundle
-            # Rounding to two decimal places ensures consistent formatting and precision for display purposes
+            # Add period percentage to the bundle
             bundle["period_percentage"] = round(period_percentage, 2)
 
         return list(aggregated_bundles.values())
