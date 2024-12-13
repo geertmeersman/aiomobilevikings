@@ -29,7 +29,7 @@ This example script demonstrates how to utilize the `MobileVikingsClient` class 
 
 1. **Installation:** Ensure the `aiomobilevikings` module is installed. If not, install it using `pip install aiomobilevikings`.
 
-2. **Configuration:** Replace the placeholder details (within the script with actual values.
+2. **Configuration:** Replace the placeholder details within the script with actual values.
 
 3. **Execution:** Run the script, and it will sequentially call these functions, displaying the retrieved data for each function.
 
