@@ -1,5 +1,32 @@
 # Changelog
 
+## [v0.2.0](https://github.com/geertmeersman/aiomobilevikings/tree/v0.2.0) (2024-12-13)
+
+[Full Changelog](https://github.com/geertmeersman/aiomobilevikings/compare/v0.1.0...v0.2.0)
+
+**Merged pull requests:**
+
+- fix: ignore modem settings, http 4xx [\#31](https://github.com/geertmeersman/aiomobilevikings/pull/31) ([geertmeersman](https://github.com/geertmeersman))
+- feat: add period percentage to balance and unpaid invoices added [\#30](https://github.com/geertmeersman/aiomobilevikings/pull/30) ([geertmeersman](https://github.com/geertmeersman))
+- build\(deps\): bump ruff from 0.8.0 to 0.8.2 [\#29](https://github.com/geertmeersman/aiomobilevikings/pull/29) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): bump ruff from 0.7.4 to 0.8.0 [\#27](https://github.com/geertmeersman/aiomobilevikings/pull/27) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): bump ruff from 0.7.3 to 0.7.4 [\#26](https://github.com/geertmeersman/aiomobilevikings/pull/26) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): bump ruff from 0.7.2 to 0.7.3 [\#25](https://github.com/geertmeersman/aiomobilevikings/pull/25) ([dependabot[bot]](https://github.com/apps/dependabot))
+- docs: release template [\#24](https://github.com/geertmeersman/aiomobilevikings/pull/24) ([geertmeersman](https://github.com/geertmeersman))
+- build\(deps\): bump ruff from 0.7.1 to 0.7.2 [\#23](https://github.com/geertmeersman/aiomobilevikings/pull/23) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): update pip requirement from \<24.3,\>=8.0.3 to \>=8.0.3,\<24.4 [\#22](https://github.com/geertmeersman/aiomobilevikings/pull/22) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): bump ruff from 0.7.0 to 0.7.1 [\#21](https://github.com/geertmeersman/aiomobilevikings/pull/21) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): bump ruff from 0.6.9 to 0.7.0 [\#20](https://github.com/geertmeersman/aiomobilevikings/pull/20) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): bump ruff from 0.6.8 to 0.6.9 [\#19](https://github.com/geertmeersman/aiomobilevikings/pull/19) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): bump ruff from 0.6.7 to 0.6.8 [\#18](https://github.com/geertmeersman/aiomobilevikings/pull/18) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): bump ruff from 0.6.5 to 0.6.7 [\#17](https://github.com/geertmeersman/aiomobilevikings/pull/17) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): bump ruff from 0.6.3 to 0.6.5 [\#16](https://github.com/geertmeersman/aiomobilevikings/pull/16) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): bump ruff from 0.6.2 to 0.6.3 [\#14](https://github.com/geertmeersman/aiomobilevikings/pull/14) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): bump ruff from 0.5.1 to 0.6.2 [\#13](https://github.com/geertmeersman/aiomobilevikings/pull/13) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): update pip requirement from \<24.2,\>=8.0.3 to \>=8.0.3,\<24.3 [\#9](https://github.com/geertmeersman/aiomobilevikings/pull/9) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): bump ruff from 0.5.0 to 0.5.1 [\#5](https://github.com/geertmeersman/aiomobilevikings/pull/5) ([dependabot[bot]](https://github.com/apps/dependabot))
+- build\(deps\): bump ruff from 0.4.10 to 0.5.0 [\#4](https://github.com/geertmeersman/aiomobilevikings/pull/4) ([dependabot[bot]](https://github.com/apps/dependabot))
+
 ## [v0.1.0](https://github.com/geertmeersman/aiomobilevikings/tree/v0.1.0) (2024-06-21)
 
 [Full Changelog](https://github.com/geertmeersman/aiomobilevikings/compare/2d53bee19c68fc9f5ce32f4dffc62f5df555bf01...v0.1.0)
