@@ -170,6 +170,10 @@ class MobileVikingsClient:
             error_data = response.json()
             _LOGGER.debug(f"404 Error: {error_data}")
             return error_data
+        elif str(response.status_code).startswith("4"):
+            error_data = response.json()
+            _LOGGER.debug(f"{response.status_code} Error: {error_data}")
+            return False
         else:
             error_message = f"Request failed. Status code: {response.status_code}"
             try:
