@@ -223,41 +223,95 @@ class MobileVikingsClient:
                 balance = await self.handle_request(
                     f"/subscriptions/{subscription_id}/balance"
                 )
-                subscription["balance"] = self.add_percentage_to_balance(balance)
+                subscription["balance_aggregated"] = self.aggregate_bundles_by_type(
+                    balance
+                )
         return subscriptions
 
-    def add_percentage_to_balance(self, balance):
-        """Calculate and add validity and usage percentages to each bundle in a balance.
+    def aggregate_bundles_by_type(self, balance):
+        """Aggregate bundles by their type, summing up total, used, and remaining values.
 
-        This function iterates through a list of bundles within the given `balance` and calculates:
-        1. The validity percentage, which indicates how much of the bundle's validity period has elapsed.
-        2. The used percentage, which shows how much of the total bundle has been consumed.
-
-        The calculated percentages are added as new keys (`period_percentage` and `used_percentage`) to each bundle.
+        For each unique bundle type, a new structure is created containing the combined values
+        for total, used, and remaining fields. Descriptions and categories are omitted, and
+        the used percentage is calculated at the end. Additionally, total_gb, used_gb, remaining_gb,
+        and period_percentage are calculated for bundles of type 'data'.
 
         Args:
         ----
             balance (dict): A dictionary containing the balance information with a key `bundles`,
-                        which is a list of dictionaries. Each bundle dictionary must have the following keys:
-                        - `valid_from` (str): Start of the validity period in ISO 8601 format (e.g., "YYYY-MM-DDTHH:MM:SS+ZZ:ZZ").
-                        - `valid_until` (str): End of the validity period in ISO 8601 format.
-                        - `total` (float): The total amount of the bundle.
-                        - `used` (float): The amount of the bundle that has been used.
+                            which is a list of dictionaries. Each bundle dictionary must have the following keys:
+                            - `type` (str): The type of the bundle (e.g., 'data', 'sms', 'voice').
+                            - `total` (float): The total amount of the bundle (in GB for data bundles).
+                            - `used` (float): The amount of the bundle that has been used (in GB for data bundles).
+                            - `remaining` (float): The amount remaining in the bundle (in GB for data bundles).
+                            - `valid_from` (str): The start date of the bundle validity (ISO 8601 format).
+                            - `valid_until` (str): The end date of the bundle validity (ISO 8601 format).
 
         Returns:
         -------
-            dict: The updated balance dictionary with added percentages for each bundle.
+            list: A list of dictionaries, each representing a unique bundle type with aggregated values.
 
         Raises:
         ------
-            ValueError: If any required key is missing or if `valid_from` and `valid_until` are not properly formatted.
+            KeyError: If required keys are missing in the input bundles.
 
         """
         # Parse the current time and make it timezone-aware
         current_time = datetime.now(timezone.utc)
 
-        # Loop through each bundle to calculate and add percentages
+        aggregated_bundles = {}
+
+        # Aggregate bundles by type
         for bundle in balance["bundles"]:
+            bundle_type = bundle.get("type")
+            if not bundle_type:
+                raise KeyError("Each bundle must have a 'type' field.")
+            # Check if the bundle type already exists in the aggregated_bundles
+            if bundle_type not in aggregated_bundles:
+                # Create a new structure for this type
+                aggregated_bundles[bundle_type] = {
+                    "type": bundle_type,
+                    "valid_from": bundle["valid_from"],
+                    "valid_until": bundle["valid_until"],
+                    "total": bundle["total"],
+                    "used": bundle["used"],
+                    "remaining": bundle["remaining"],
+                    "unlimited": False,  # Default to False
+                }
+            else:
+                # Sum up values for this type
+                aggregated_bundles[bundle_type]["total"] += bundle["total"]
+                aggregated_bundles[bundle_type]["used"] += bundle["used"]
+                aggregated_bundles[bundle_type]["remaining"] += bundle["remaining"]
+
+        # Calculate additional values for each aggregated bundle
+        for bundle in aggregated_bundles.values():
+            _LOGGER.critical(f"{bundle}")
+            total = bundle["total"]
+            used = bundle["used"]
+            remaining = bundle["remaining"]
+
+            # Handle the case where total == 0 (unlimited bundle)
+            if total == 0:
+                bundle["unlimited"] = True
+                bundle["total"] = 0
+                bundle["used"] = 0
+                bundle["remaining"] = 0
+                # Skip further calculations for this bundle (since it's unlimited)
+                continue
+
+            # Calculate used percentage
+            bundle["used_percentage"] = (used / total) * 100 if total > 0 else 0
+            bundle["used_percentage"] = round(
+                bundle["used_percentage"], 2
+            )  # Round to two decimal places
+
+            # Only add total_gb, used_gb, and remaining_gb if the bundle type is 'data'
+            if bundle["type"] == "data":
+                bundle["total_gb"] = round(total / (1024**3), 2)
+                bundle["used_gb"] = round(used / (1024**3), 2)
+                bundle["remaining_gb"] = round(remaining / (1024**3), 2)
+
             try:
                 valid_from = datetime.strptime(
                     bundle["valid_from"], "%Y-%m-%dT%H:%M:%S%z"
@@ -275,17 +329,11 @@ class MobileVikingsClient:
                 0, min((elapsed_time / validity_period) * 100, 100)
             )  # Clamp between 0 and 100
 
-            # Calculate used percentage
-            total = bundle["total"]
-            used = bundle["used"]
-            used_percentage = (used / total) * 100 if total > 0 else 0
-
             # Add percentages to the bundle
             # Rounding to two decimal places ensures consistent formatting and precision for display purposes
             bundle["period_percentage"] = round(period_percentage, 2)
-            bundle["used_percentage"] = round(used_percentage, 2)
 
-        return balance
+        return list(aggregated_bundles.values())
 
     async def get_invoices(self):
         """Fetch subscriptions from the Mobile Vikings API.
@@ -324,10 +372,10 @@ class MobileVikingsClient:
         except Exception as e:
             loyalty_points_balance = {"error": str(e)}
 
-        try:
-            subscriptions = await self.get_subscriptions()
-        except Exception as e:
-            subscriptions = {"error": str(e)}
+        #        try:
+        subscriptions = await self.get_subscriptions()
+        #        except Exception as e:
+        #            subscriptions = {"error": str(e)}
 
         try:
             unpaid_invoices = await self.get_invoices()
