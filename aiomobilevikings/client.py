@@ -1,9 +1,11 @@
 """Module containing the MobileVikingsClient class for interacting with the Mobile Vikings API."""
 
-import httpx
-import logging
-from .const import CLIENT_ID, CLIENT_SECRET, BASE_URL
 from datetime import datetime, timedelta, timezone
+import logging
+
+import httpx
+
+from .const import BASE_URL, CLIENT_ID, CLIENT_SECRET
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -56,21 +58,25 @@ class MobileVikingsClient:
         else:
             if self.refresh_token:
                 _LOGGER.debug("Access token renewal with refresh token")
-                await self._request_token({
-                    "refresh_token": self.refresh_token,
-                    "grant_type": "refresh_token",
-                    "client_id": CLIENT_ID,
-                    "client_secret": CLIENT_SECRET,
-                })
+                await self._request_token(
+                    {
+                        "refresh_token": self.refresh_token,
+                        "grant_type": "refresh_token",
+                        "client_id": CLIENT_ID,
+                        "client_secret": CLIENT_SECRET,
+                    }
+                )
             else:
                 _LOGGER.debug("Requesting new access token")
-                await self._request_token({
-                    "username": self.username,
-                    "password": self.password,
-                    "grant_type": "password",
-                    "client_id": CLIENT_ID,
-                    "client_secret": CLIENT_SECRET,
-                })
+                await self._request_token(
+                    {
+                        "username": self.username,
+                        "password": self.password,
+                        "grant_type": "password",
+                        "client_id": CLIENT_ID,
+                        "client_secret": CLIENT_SECRET,
+                    }
+                )
 
         if self._is_token_valid():
             self.client.headers["Authorization"] = f"Bearer {self.access_token}"
@@ -84,21 +90,33 @@ class MobileVikingsClient:
 
     def _is_token_valid(self):
         """Check if the current access token is valid."""
-        return self.access_token and self.access_token_expiry and datetime.now() < self.access_token_expiry
+        return (
+            self.access_token
+            and self.access_token_expiry
+            and datetime.now() < self.access_token_expiry
+        )
 
     async def _request_token(self, payload):
         """Request an access token with the given payload."""
-        response = await self.handle_request("/oauth2/token/", payload, "POST", True, True)
+        response = await self.handle_request(
+            "/oauth2/token/", payload, "POST", True, True
+        )
 
         data = response.json()
         if response.status_code == 200:
             self.access_token = data.get("access_token")
             self.expires_in = data.get("expires_in")
-            self.access_token_expiry = datetime.now() + timedelta(seconds=self.expires_in)
+            self.access_token_expiry = datetime.now() + timedelta(
+                seconds=self.expires_in
+            )
             self.refresh_token = data.get("refresh_token")
         elif response.status_code == 400 and payload.get("grant_type") == "password":
-            raise AuthenticationError(f"Invalid grant_type - {data.get('error_description')}")
-        elif response.status_code == 401 and payload.get("grant_type") == "refresh_token":
+            raise AuthenticationError(
+                f"Invalid grant_type - {data.get('error_description')}"
+            )
+        elif (
+            response.status_code == 401 and payload.get("grant_type") == "refresh_token"
+        ):
             raise AuthenticationError(f"Unauthorized - {data.get('error_description')}")
         else:
             raise AuthenticationError("Failed to authenticate")
@@ -157,7 +175,7 @@ class MobileVikingsClient:
             try:
                 error_data = response.json()
                 error_message += f", Error: {error_data}"
-            except:
+            except Exception:
                 pass
             raise Exception(error_message)
 
@@ -215,7 +233,7 @@ class MobileVikingsClient:
 
         Args:
         ----
-            balance (dict): A dictionary containing the balance information with a key `bundles`, 
+            balance (dict): A dictionary containing the balance information with a key `bundles`,
                         which is a list of dictionaries. Each bundle dictionary must have the following keys:
                         - `valid_from` (str): Start of the validity period in ISO 8601 format (e.g., "YYYY-MM-DDTHH:MM:SS+ZZ:ZZ").
                         - `valid_until` (str): End of the validity period in ISO 8601 format.
@@ -235,27 +253,33 @@ class MobileVikingsClient:
         current_time = datetime.now(timezone.utc)
 
         # Loop through each bundle to calculate and add percentages
-        for bundle in balance['bundles']:
+        for bundle in balance["bundles"]:
             try:
-                valid_from = datetime.strptime(bundle['valid_from'], "%Y-%m-%dT%H:%M:%S%z")
-                valid_until = datetime.strptime(bundle['valid_until'], "%Y-%m-%dT%H:%M:%S%z")
+                valid_from = datetime.strptime(
+                    bundle["valid_from"], "%Y-%m-%dT%H:%M:%S%z"
+                )
+                valid_until = datetime.strptime(
+                    bundle["valid_until"], "%Y-%m-%dT%H:%M:%S%z"
+                )
             except ValueError as e:
                 raise ValueError(f"Invalid date format in bundle: {e}")
 
             # Calculate validity percentage
             validity_period = (valid_until - valid_from).total_seconds()
             elapsed_time = (current_time - valid_from).total_seconds()
-            period_percentage = max(0, min((elapsed_time / validity_period) * 100, 100))  # Clamp between 0 and 100
+            period_percentage = max(
+                0, min((elapsed_time / validity_period) * 100, 100)
+            )  # Clamp between 0 and 100
 
             # Calculate used percentage
-            total = bundle['total']
-            used = bundle['used']
+            total = bundle["total"]
+            used = bundle["used"]
             used_percentage = (used / total) * 100 if total > 0 else 0
 
             # Add percentages to the bundle
             # Rounding to two decimal places ensures consistent formatting and precision for display purposes
-            bundle['period_percentage'] = round(period_percentage, 2)
-            bundle['used_percentage'] = round(used_percentage, 2)
+            bundle["period_percentage"] = round(period_percentage, 2)
+            bundle["used_percentage"] = round(used_percentage, 2)
 
         return balance
 
@@ -268,7 +292,9 @@ class MobileVikingsClient:
             A dictionary containing subscription information.
 
         """
-        invoices = await self.handle_request("/invoices?status=accepted,bad_dept,created,issued,partially_paid,pending_payment,review,unknown")
+        invoices = await self.handle_request(
+            "/invoices?status=accepted,bad_dept,created,issued,partially_paid,pending_payment,review,unknown"
+        )
         return invoices.get("results")
 
     async def get_data(self):
