@@ -21,6 +21,81 @@ Asynchronous library to communicate with the Mobile Vikings API
 [![github contributors](https://img.shields.io/github/contributors/geertmeersman/aiomobilevikings)](https://github.com/geertmeersman/aiomobilevikings/graphs/contributors)
 [![github commit activity](https://img.shields.io/github/commit-activity/y/geertmeersman/aiomobilevikings?logo=github)](https://github.com/geertmeersman/aiomobilevikings/commits/main)
 
+## Mobile Vikings API - Available Endpoints
+
+### 1. **Authenticate**
+
+- **Description**: Authenticates with the Mobile Vikings API to obtain an access token.
+- **Input**:
+  - `username` (string): Mobile Vikings account username.
+  - `password` (string): Mobile Vikings account password.
+- **Output**:
+  - `refresh_token` (string): Token for refreshing the access token.
+  - `access_token` (string): Token for accessing other endpoints.
+  - `expires_in` (int): Time in seconds until the access token expires.
+
+---
+
+### 2. **Get Customer Info**
+
+- **Description**: Fetches customer details from the API.
+- **Input**: None.
+- **Output**:
+  - `id` (string): Customer ID.
+  - `name` (string): Customer name.
+  - `email` (string): Email address.
+
+---
+
+### 3. **Get Loyalty Points Balance**
+
+- **Description**: Retrieves the loyalty points balance of the customer.
+- **Input**: None.
+- **Output**:
+  - `points` (int): Total loyalty points.
+  - `valid_until` (string, ISO 8601): Expiry date of points.
+
+---
+
+### 4. **Get Subscriptions**
+
+- **Description**: Lists active subscriptions with additional details like modem settings or balance.
+- **Input**: None.
+- **Output**:
+  - `subscriptions` (list of objects):
+    - `id` (string): Subscription ID.
+    - `type` (string): Type of subscription (e.g., "mobile", "fixed-internet").
+    - `balance` (object): Balance details including:
+      - `used` (float): Data/usage consumed.
+      - `total` (float): Total data/usage.
+      - `period_percentage` (float): Percentage of validity period elapsed.
+      - `used_percentage` (float): Percentage of usage consumed.
+
+---
+
+### 5. **Get Invoices**
+
+- **Description**: Retrieves unpaid and pending invoices.
+- **Input**: None.
+- **Output**:
+  - `invoices` (list of objects):
+    - `id` (string): Invoice ID.
+    - `amount` (float): Invoice amount.
+    - `status` (string): Invoice status (e.g., "pending_payment", "accepted").
+
+---
+
+### 6. **Get All Data**
+
+- **Description**: Aggregates customer info, loyalty points, subscriptions, and unpaid invoices in one call.
+- **Input**: None.
+- **Output**:
+  - `customer_info` (object): Customer details (see Get Customer Info).
+  - `loyalty_points_balance` (object): Loyalty points balance (see Get Loyalty Points Balance).
+  - `subscriptions` (list of objects): Subscriptions (see Get Subscriptions).
+  - `unpaid_invoices` (list of objects): Invoices (see Get Invoices).
+  - `timestamp` (string, ISO 8601): Time of data retrieval.
+
 ## Mobile Vikings API Example Script
 
 This example script demonstrates how to utilize the `MobileVikingsClient` class from the `aiomobilevikings` module to interact with the Mobile Vikings API. It showcases various functionalities available within the client class to retrieve different types of data from the API.
