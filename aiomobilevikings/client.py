@@ -261,6 +261,9 @@ class MobileVikingsClient:
 
         aggregated_bundles = {}
 
+        if "bundles" not in balance:
+            raise KeyError("The 'balance' dictionary must contain a 'bundles' key")
+
         # Aggregate bundles by type
         for bundle in balance["bundles"]:
             bundle_type = bundle.get("type")
