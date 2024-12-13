@@ -286,7 +286,6 @@ class MobileVikingsClient:
 
         # Calculate additional values for each aggregated bundle
         for bundle in aggregated_bundles.values():
-            _LOGGER.critical(f"{bundle}")
             total = bundle["total"]
             used = bundle["used"]
             remaining = bundle["remaining"]
@@ -372,10 +371,10 @@ class MobileVikingsClient:
         except Exception as e:
             loyalty_points_balance = {"error": str(e)}
 
-        #        try:
-        subscriptions = await self.get_subscriptions()
-        #        except Exception as e:
-        #            subscriptions = {"error": str(e)}
+        try:
+            subscriptions = await self.get_subscriptions()
+        except Exception as e:
+            subscriptions = {"error": str(e)}
 
         try:
             unpaid_invoices = await self.get_invoices()
